@@ -1,0 +1,29 @@
+{
+  "name": "@tipjar/tipjar",
+  "version": "0.1.0",
+  "svelte": "src/index.js",
+  "module": "dist/index.mjs",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "rollup -c",
+    "dev": "rollup -cw",
+    "prepublishOnly": "npm run build"
+  },
+  "devDependencies": {
+    "@rollup/plugin-commonjs": "^21.0.1",
+    "@rollup/plugin-node-resolve": "^9.0.0",
+    "autoprefixer": "^10.4.0",
+    "import": "^0.0.6",
+    "postcss": "^8.4.5",
+    "rollup": "^2.61.1",
+    "rollup-plugin-svelte": "^7.1.0",
+    "svelte": "^3.5.0",
+    "svelte-preprocess": "^4.10.0"
+  },
+  "keywords": [
+    "svelte"
+  ],
+  "dependencies": {
+    "matter-js": "^0.18.0"
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "name": "@tipjar/react-tipjar",
+  "version": "0.1.0",
+  "module": "dist/index.mjs",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "rollup -c",
+    "dev": "rollup -cw",
+    "prepublishOnly": "npm run build"
+  },
+  "devDependencies": {
+    "rollup": "^2.61.1"
+  },
+  "dependencies": {
+    "react": "^17.0.2",
+    "@tipjar/tipjar": "*"
+  },
+  "keywords": [
+    "react"
+  ]
+}

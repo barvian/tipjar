@@ -1,0 +1,89 @@
+*, *::before, *::after {
+	margin:  0;
+	box-sizing:  border-box;
+	padding: 0;
+}
+
+/*
+Noise svg source (compile here:  https://yoksel.github.io/url-encoder/):
+
+<svg xmlns="http://www.w3.org/2000/svg" width="500" height="500">
+    <filter id="noise" x="0" y="0">
+      <feTurbulence type="fractalNoise" baseFrequency=".4" numOctaves="3" stitchTiles="stitch"/>
+      <feBlend mode="screen"/>
+    </filter>
+    <rect width="500" height="500" filter="url(#noise)" opacity="0.1"/>
+</svg>
+*/
+
+:root {
+	background: var(--beige) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='500' height='500'%3E%3Cfilter id='noise' x='0' y='0'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.4' numOctaves='3' stitchTiles='stitch'/%3E%3CfeBlend mode='screen'/%3E%3C/filter%3E%3Crect width='500' height='500' filter='url(%23noise)' opacity='0.1'/%3E%3C/svg%3E") repeat;
+	font-family: var(--sans);
+	-webkit-font-smoothing: antialiased;
+	-moz-osx-font-smoothing: grayscale;
+	-ms-text-size-adjust: 100%;
+	-webkit-text-size-adjust: 100%;
+	overflow-x:  hidden;
+
+	--sans: 'Syne', sans-serif;
+	--black: #000;
+	--white: #fff;
+	--beige: #E3DCD7;
+	--heading-color: #201F1E;
+	--text-color: #605C59;
+	--width: 58rem;
+
+	--space-2: max(4vh, 2rem);
+	--space-4: max(8vh, 4rem);
+}
+
+body {
+	min-height: 100vh;
+	display: flex;
+	flex-flow: column nowrap;
+	justify-content:  center;
+	padding: var(--space-2) max(10vw, 1.25rem);
+	overflow: hidden;
+}
+
+h1 {
+	font-size:  clamp(3rem, 6vw, 4.5rem);
+	font-weight: bold;
+	line-height: 1.08;
+}
+
+h2 {
+	font-size: 1.85rem;
+	font-weight: normal;
+	margin-bottom: var(--space-2);
+}
+
+h2, p {
+	color: var(--text-color);
+}
+
+img {
+	max-width: 100%;
+}
+
+button, .button {
+	-webkit-font-smoothing: auto;
+	-moz-osx-font-smoothing: auto;
+	background: var(--black);
+	border: none;
+	border-radius:  0.25rem;
+	/*box-shadow: 0 0.5rem 2rem -0.25rem rgba(0, 0, 0, .15);*/
+	color: var(--white);
+	cursor: pointer;
+	font-family: var(--sans);
+	font-size: 1.25rem/*1.75rem*/;
+	padding: 0.9em 1.25em/*0.5em 0.75em*/;
+	line-height: 1;
+}
+
+	button svg {
+		display: inline-block;
+		margin-left: 0.35em;
+		height: 0.7em;
+		width: auto;
+	}
