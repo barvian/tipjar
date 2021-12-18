@@ -67,7 +67,7 @@
     user-select: none;
 
     --transition: 250ms ease-out;
-    --min-hole: calc(var(--hole-space) + 16);
+    --min-hole: calc(var(--hole-space) + 20); /* kinda magic number */
     --hole: min(var(--min-hole), 32);
   }
 
@@ -79,12 +79,17 @@
     overflow: hidden;
     top: 0;
     transition: transform var(--transition);
-    transform: translateZ(-24px);
+    transform: translateZ(-24px) scale(1.035); /* scale visually undoes Z translation */
     transform-origin: center;
     left: 0;
     width: 100%;
     height: 100%;
   }
+
+    .tip:hover .base {
+      /* compensate for the lack of actual 3d by scaling upward too */
+      transform: translateZ(-33px) scale(1.035, 1.085) translateY(5%);
+    }
 
   /*
    * Layer for more realistic effect
@@ -115,11 +120,6 @@
 
   .tip:hover {
     transform: rotateX(-15deg);
-  }
-
-  .tip:hover .base {
-    /* compensate for the lack of actual 3d */
-    transform: translateZ(-33px) scaleY(1.05) translateY(5%);
   }
 
   .opening {
