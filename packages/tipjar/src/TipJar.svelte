@@ -6,18 +6,25 @@
   export let labelColor = '#000'
   export let showCoins = true
 
+  let tipping = false
+
   let w, h, coins
   $: r = h ? Math.min(h / 2, radius) : radius // compute actual radius, i.e. if 999px
   $: holeSpace = w ? w - r*2 : 0
 </script>
 
 <div class="wrapper">
-  <div class="tip" bind:clientWidth={w} bind:clientHeight={h} style="
-    --radius: {radius};
-    --color: {color};
-    --label-color: {labelColor};
-    --hole-space: {holeSpace};
-  ">
+  <div class="tip"
+    bind:clientWidth={w} bind:clientHeight={h}
+    tabindex="0" role="button"
+    aria-expanded={tipping} aria-controls="tip"
+    style="
+      --radius: {radius};
+      --color: {color};
+      --label-color: {labelColor};
+      --hole-space: {holeSpace};
+    "
+  >
     <div class="shadow"></div>
     <div class="base">
       {#if showCoins && w && h && radius}
@@ -27,6 +34,8 @@
     <span>Tips</span>
     <div class="opening"></div>
   </div>
+
+  <div id="tip"></div>
 </div>
 
 <style> 
@@ -77,8 +86,16 @@
     height: 100%;
   }
 
+  /*
+   * Layer for more realistic effect
+   * See:  https://tobiasahlin.com/blog/layered-smooth-box-shadows/
+   */
   .shadow {
-    box-shadow: 0 8px 20px -4px rgba(0, 0, 0, 0.12);
+    box-shadow:
+      0 2px 6px -1px rgba(0, 0, 0, 0.03),
+      0 4px 12px -4px rgba(0, 0, 0, 0.05),
+      0 8px 20px -4px rgba(0, 0, 0, 0.07)
+    ;
     border-radius: calc(var(--radius) * 1px);
     position: absolute;
     top: 0;
@@ -91,9 +108,9 @@
   }
 
     .tip:hover .shadow {
-      filter: blur(2px);
+      filter: blur(1px);
       /* compensate for the lack of actual 3d */
-      transform: translateZ(-40px) scaleY(1.05) translateY(4.5%);
+      transform: translateZ(-40px) translateY(12%);
     }
 
   .tip:hover {
