@@ -4,20 +4,8 @@
 	padding: 0;
 }
 
-/*
-Noise svg source (compile here:  https://yoksel.github.io/url-encoder/):
-
-<svg xmlns="http://www.w3.org/2000/svg" width="500" height="500">
-    <filter id="noise" x="0" y="0">
-      <feTurbulence type="fractalNoise" baseFrequency=".4" numOctaves="3" stitchTiles="stitch"/>
-      <feBlend mode="screen"/>
-    </filter>
-    <rect width="500" height="500" filter="url(#noise)" opacity="0.1"/>
-</svg>
-*/
-
 :root {
-	background: var(--beige) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='500' height='500'%3E%3Cfilter id='noise' x='0' y='0'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.4' numOctaves='3' stitchTiles='stitch'/%3E%3CfeBlend mode='screen'/%3E%3C/filter%3E%3Crect width='500' height='500' filter='url(%23noise)' opacity='0.1'/%3E%3C/svg%3E") repeat;
+	background: var(--beige);
 	font-family: var(--sans);
 	-webkit-font-smoothing: antialiased;
 	-moz-osx-font-smoothing: grayscale;

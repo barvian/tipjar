@@ -1,12 +1,20 @@
 <script>
   import { onMount } from 'svelte'
   import { Engine, Render, Common, Runner, Composite, Composites, Body, Bodies } from 'matter-js'
+  import { latestTip } from './stores'
 
   export let w
   export let h
   export let radius
+  export let paused = false
 
-  const engine = Engine.create(), world = engine.world, runner = Runner.create()
+  const things = []
+
+  const engine = Engine.create({
+    enableSleeping: true // puts bodies to sleep when they come to rest, saves a lot on perf
+  })
+  const world = engine.world
+  const runner = Runner.create()
 
   let wrapper
   onMount(() => {
@@ -17,6 +25,7 @@
         pixelRatio: 'auto', // I think it might actually be better a little blurry
         width: w,
         height: h,
+        showSleeping: false,
         wireframes: false,
         background: 'transparent'
       }
@@ -45,17 +54,9 @@
         })
     ])
 
-    const stack = Composites.stack(w / 2 - 9, 0, 3, 4, 0, 0, (x, y) =>
-        Bodies.circle(x, y, Common.choose([3, 4, 5]), {
-          friction: 0.1,
-          // restitution: 0.6,
-          render: {
-            fillStyle: '#000'
-          }
-        })
-    )
+    const stack = Composites.stack(w / 2 - 9, -40, 3, 4, 0, 0, (x, y) => addCoin({ x, y, add: false }))
 
-    Composite.add(world, stack)    
+    Composite.add(world, stack)
 
     return () => {
       Render.stop(render)
@@ -63,6 +64,40 @@
       Engine.clear(engine)
     }
   })
+
+  function addCoin({ x, y = 0, add = true } = {}) {
+    const size = Common.choose([3, 4, 5])
+    const coin = Bodies.circle(x ?? w/2 - size/2 + 1, y, size, {
+      friction: 0.1,
+      // restitution: 0.75, // this bugs out when it gets full
+      render: {
+        fillStyle: '#000'
+      }
+    })
+
+    if (add) Composite.add(world, coin)
+    things.push(coin)
+    return coin
+  }
+
+  export function addNote() {
+    const [width, height] = Common.choose([[6, 8], [8, 8]])
+    const note = Bodies.rectangle(w/2 - width/2 + 1, -10, width, height, {
+      friction: 0.1,
+      density: 0.0001,
+      frictionAir: 0.75,
+      // restitution: 0.75, // this bugs out when it gets full
+      render: {
+        fillStyle: '#000'
+      }
+    })
+
+    Composite.add(world, note)
+    things.push(note)
+    return note
+  }
+
+  // setInterval(() => Common.choose([addNote(), addCoin()]), 1500)
 </script>
 
 <div class="wrapper" style="width: min-content" bind:this={wrapper}></div>
