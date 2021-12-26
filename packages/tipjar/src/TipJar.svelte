@@ -1,6 +1,6 @@
 <script>
   import { onMount } from 'svelte'
-  import Coins from './Coins.svelte'
+  import Coins, { loadMatter } from './Coins.svelte'
   import Tip from './Tip.svelte'
 
   export let radius = 60
@@ -14,6 +14,7 @@
   export let labelTextTransform = 'none'
 
   let tipping = false
+  const matterReq = loadMatter()
 
   let w, h, r, holeSpace
   $: r = h ? Math.min(h / 2, radius) : radius // compute actual radius, i.e. if 999px
@@ -81,9 +82,11 @@
   >
     <div class="shadow"></div>
     <div class="base">
-      {#if w && h && radius != null}
-      <Coins {w} {h} {radius} paused={tipping} bind:this={coins} />
-      {/if}
+      {#await matterReq then matter}
+        {#if w && h && r != null}
+        <Coins class="coins" {w} {h} {r} paused={tipping} {matter} bind:this={coins} />
+        {/if}
+      {/await}
     </div>
     <span>{label}</span>
     <div class="opening"></div>
@@ -147,7 +150,7 @@
   }
 
     .jar:hover .base,
-    :global(.is-dragover) .jar .base {
+    :global(.is-dragover:root) .jar .base {
       /* compensate for the lack of actual 3d by scaling upward too */
       transform: translateZ(-33px) scale(1.035, 1.085) translateY(5%);
     }
@@ -174,14 +177,18 @@
   }
 
     .jar:hover .shadow,
-    :global(.is-dragover) .jar .shadow {
+    :global(.is-dragover:root) .jar .shadow {
       filter: blur(1px);
       /* compensate for the lack of actual 3d */
       transform: translateZ(-40px) translateY(12%);
     }
 
-  .jar:hover, :global(.is-dragover) .jar {
+  .jar:hover, :global(.is-dragover:root) .jar {
     transform: rotateX(-15deg);
+  }
+
+  .jar :global(.coins) {
+    opacity: 0.15;
   }
 
   .opening {
@@ -200,7 +207,7 @@
   }
 
   .jar:hover .opening,
-  :global(.is-dragover) .jar .opening {
+  :global(.is-dragover:root) .jar .opening {
     transform: translate3d(-50%, 0, -24px) rotateX(90deg);
   }
 </style>

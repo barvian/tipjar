@@ -1,5 +1,7 @@
 <script>
 	export let value = 0
+	export let autofocus = false
+	export let readonly = false
 
 	const formatter = new Intl.NumberFormat('en-US', {
 		style: 'currency',
@@ -15,6 +17,10 @@
 		.formatToParts(value / precision)
 		.filter(p => p.type !== 'currency')
 		.map(p => p.value).join('')
+
+	function autoFocus(el) {
+		if (autofocus) el.focus()
+	}
 
 	function handleKeyDown(event) {
 		const str = value.toString(10)
@@ -32,16 +38,14 @@
 {#if symbolIndex === 0}{symbol}{/if}
 <input type="text"
 	aria-label="Tip amount"
-	autocomplete="off" 
+	autocomplete="off"
 	placeholder="0.00"
 	pattern="[0-9]*"
 	value={textValue}
 	on:keydown={handleKeyDown}
+	use:autoFocus {readonly}
 />
 {#if symbolIndex > 0}{symbol}{/if}
 
 <style>
-	input {
-		user-select: none;
-	}
 </style>
