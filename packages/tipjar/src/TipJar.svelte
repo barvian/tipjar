@@ -1,7 +1,10 @@
 <script>
-  import { onMount } from 'svelte'
+  import { onMount, setContext } from 'svelte'
+  import { loadStripe } from '@stripe/stripe-js'
+  import { loadScript as loadPaypal } from '@paypal/paypal-js'
   import Coins, { loadMatter } from './Coins.svelte'
   import Tip from './Tip.svelte'
+  import { stripeKey, paypalKey } from './const'
 
   export let radius = 60
   export let bg = 'rgba(255, 255, 255, 0.9)'
@@ -13,12 +16,31 @@
   export let labelLetterSpacing = 0
   export let labelTextTransform = 'none'
 
+  export let stripePublishableKey = ''
+  export let paypalClientId = ''
+
   let tipping = false
   const matterReq = loadMatter()
 
   let w, h, r, holeSpace
   $: r = h ? Math.min(h / 2, radius) : radius // compute actual radius, i.e. if 999px
   $: holeSpace = w ? w - r*2 : 0
+
+  const stripeReq = loadStripe(stripePublishableKey)
+  const paymentRequestP = stripeReq.then(stripe => stripe.paymentRequest({
+    country: 'US',
+    currency: 'usd',
+    total: { label: 'Donation', amount: 0 },
+    requestPayerEmail: true
+  }))
+  const walletReadyP = paymentRequestP.then(pr => pr.canMakePayment())
+  
+  setContext(stripeKey, {
+    stripeReq,
+    paymentRequestP,
+    walletReadyP
+  })
+  setContext(paypalKey, loadPaypal({ 'client-id': paypalClientId }))
 
   let jar, coins
   onMount(() => {
@@ -61,7 +83,7 @@
 </script>
 
 <div class="wrapper">
-  <div class="jar"
+  <div class="jar" class:tipping
     bind:clientWidth={w} bind:clientHeight={h}
     bind:this={jar}
     tabindex="0" role="button"
@@ -93,7 +115,7 @@
   </div>
   
   {#if tipping}
-  <Tip />
+  <Tip {radius} />
   {/if}
 </div>
 
@@ -149,7 +171,7 @@
     height: 100%;
   }
 
-    .jar:hover .base,
+    .jar:hover .base, .jar.tipping .base,
     :global(.is-dragover:root) .jar .base {
       /* compensate for the lack of actual 3d by scaling upward too */
       transform: translateZ(-33px) scale(1.035, 1.085) translateY(5%);
@@ -176,14 +198,14 @@
     height: 100%;
   }
 
-    .jar:hover .shadow,
+    .jar:hover .shadow, .jar.tipping .shadow,
     :global(.is-dragover:root) .jar .shadow {
       filter: blur(1px);
       /* compensate for the lack of actual 3d */
       transform: translateZ(-40px) translateY(12%);
     }
 
-  .jar:hover, :global(.is-dragover:root) .jar {
+  .jar:hover, .jar.tipping, :global(.is-dragover:root) .jar {
     transform: rotateX(-15deg);
   }
 
@@ -206,7 +228,7 @@
     height: calc(var(--hole)*1px);
   }
 
-  .jar:hover .opening,
+  .jar:hover .opening, .jar.tipping .opening,
   :global(.is-dragover:root) .jar .opening {
     transform: translate3d(-50%, 0, -24px) rotateX(90deg);
   }
