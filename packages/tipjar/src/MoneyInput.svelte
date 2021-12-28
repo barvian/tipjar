@@ -22,10 +22,6 @@
 		.filter(p => p.type !== 'currency')
 		.map(p => p.value).join('')
 
-	function autoFocus(el) { /* input binding may not exist yet */
-		if (autofocus) el.focus()
-	}
-
 	export function focus() {
 		input?.focus()
 	}
@@ -43,7 +39,7 @@
 	}
 </script>
 
-<div class="wrapper">
+<div class="wrapper {$$props.class}">
 	<input type="text"
 		bind:this={input}
 		aria-label="Tip amount"
@@ -53,7 +49,7 @@
 		value={textValue}
 		on:keydown={handleKeyDown}
 		on:click
-		use:autoFocus {readonly}
+		{readonly}
 	/>
 	<div class="filler" aria-hidden>
 		{#if symbolIndex === 0}<span class="symbol">{symbol}</span>{/if}
@@ -71,7 +67,7 @@
 	input, .amount {
 		border: none;
 		display: block;
-		font-size: calc(var(--font-size, 16px) * 2.75);
+		font-size: calc(var(--font-size, 16px) * 3);
 		font-family: inherit;
 		font-weight: 300;
 		line-height: 1;		

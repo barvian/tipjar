@@ -10,10 +10,12 @@
 <script>
   import { onMount } from 'svelte'
   import { latestTip } from './stores'
+  import { darken, toRgba } from 'color2k'
 
   export let w
   export let h
   export let r
+  export let c
   export let paused = false
   export let matter
 
@@ -74,12 +76,11 @@
   })
 
   function addCoin({ x, y = 0, add = true } = {}) {
-    const size = matter.Common.choose([3, 4, 5])
+    const [size, darkenAmount] = matter.Common.choose([[3, .6*.1], [4, .8*.1], [5, .1]])
     const coin = matter.Bodies.circle(x ?? w/2 - size/2 + 1, y, size, {
-      friction: 0.1,
-      // restitution: 0.75, // this bugs out when it gets full
+      restitution: 0.75,
       render: {
-        fillStyle: '#000'
+        fillStyle: toRgba(darken(c, darkenAmount))
       }
     })
 
@@ -94,7 +95,6 @@
       friction: 0.1,
       density: 0.0001,
       frictionAir: 0.75,
-      // restitution: 0.75, // this bugs out when it gets full
       render: {
         fillStyle: '#000'
       }
@@ -106,6 +106,7 @@
   }
 
   // setInterval(() => Common.choose([addNote(), addCoin()]), 1500)
+  // setInterval(addCoin, 1500)
 </script>
 
-<div class={$$props.class} style="width: min-content" bind:this={wrapper}></div>
+<div style="width: min-content" bind:this={wrapper}></div>
