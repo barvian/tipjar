@@ -2,9 +2,10 @@ import svelte from 'rollup-plugin-svelte'
 import sveltePreprocess from 'svelte-preprocess'
 import resolve from '@rollup/plugin-node-resolve'
 import commonjs from '@rollup/plugin-commonjs'
-import typescript from '@rollup/plugin-typescript'
+import replace from '@rollup/plugin-replace'
 import pkg from './package.json'
 
+const dev = process.env.ROLLUP_WATCH
 const name = pkg.name
 	.replace(/^(@\S+\/)?(svelte-)?(\S+)/, '$3')
 	.replace(/^\w/, m => m.toUpperCase())
@@ -17,6 +18,11 @@ export default {
 		{ file: pkg.main, format: 'umd', name }
 	],
 	plugins: [
+		replace({
+	      '%FIREBASE_CONFIG_URL%': dev ?
+	      	'/firebase-config.json' :
+	      	'://tipkit.io/firebase-config.json'
+	    }),
 		svelte({
 			preprocess: sveltePreprocess({
 				postcss: {
@@ -28,7 +34,6 @@ export default {
 				dev: false
 			}
 		}),
-		typescript({ sourceMap: false }),
 		resolve(),
 		commonjs()
 	]

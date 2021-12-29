@@ -8,9 +8,10 @@
 </script>
 
 <script>
-  import { onMount } from 'svelte'
-  import { latestTip } from './stores'
+  import { onMount, onDestroy } from 'svelte'
+  import { latestTip } from './lib/stores'
   import { darken, toRgba } from 'color2k'
+  import { pageLoaded, sleep, isInView } from './lib/util'
 
   export let w
   export let h
@@ -27,9 +28,9 @@
   const world = engine.world
   const runner = matter.Runner.create()
 
-  let wrapper
-  onMount(() => {
-    const render = matter.Render.create({
+  let wrapper, render
+  onMount(async() => {
+    render = matter.Render.create({
       element: wrapper,
       engine,
       options: {
@@ -44,6 +45,12 @@
 
     matter.Render.run(render)
     matter.Runner.run(runner, engine)
+
+    // Increase chance of smooth initial animation
+    await pageLoaded
+    await sleep(500)
+    // I don't like the idea of doing this on a transformed element
+    await isInView(wrapper?.closest && wrapper?.closest('.jar'))
 
     // Add walls
     matter.Composite.add(world, [
@@ -67,12 +74,12 @@
     const stack = matter.Composites.stack(w / 2 - 12, -40, 3, 4, 0, 0, (x, y) => addCoin({ x, y, add: false }))
 
     matter.Composite.add(world, stack)
+  })
 
-    return () => {
+  onDestroy(() => {
       matter.Render.stop(render)
       matter.Runner.stop(runner)
       matter.Engine.clear(engine)
-    }
   })
 
   function addCoin({ x, y = 0, add = true } = {}) {

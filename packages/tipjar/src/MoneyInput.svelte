@@ -65,6 +65,7 @@
 	}
 
 	input, .amount {
+		background: none;
 		border: none;
 		display: block;
 		font-size: calc(var(--font-size, 16px) * 3);

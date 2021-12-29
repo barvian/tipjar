@@ -1,1 +1,1 @@
-export { default as default } from './TipJar.svelte'
+export { default as default } from './HostedTipJar.svelte'

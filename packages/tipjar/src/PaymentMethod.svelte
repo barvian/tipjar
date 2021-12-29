@@ -1,6 +1,6 @@
 <script>
 	import { onMount, getContext } from 'svelte'
-	import { stripeKey, paypalKey } from './const'
+	import { stripeKey, paypalKey } from './lib/const'
 
 	export let currency = 'usd'
 	export let label = 'Donation'
@@ -43,7 +43,8 @@
 				style: {
 					layout: 'horizontal',
 					tagline: false,
-					height: paypalButtonHeight
+					height: paypalButtonHeight,
+					shape: 'rect'
 				}
 			}).render(paypalContainer)
 		}
@@ -51,7 +52,7 @@
 </script>
 
 <div class="methods" style="--button-height: {paypalButtonHeight}px;">
-	<div hidden={!walletEnabled} bind:this={walletButton} class="wallet"></div>
+	<div hidden={!walletEnabled} class="wallet"><div bind:this={walletButton} /></div>
 	<div hidden={walletEnabled} bind:this={paypalContainer} class="paypal"></div>
 	<button hidden={walletEnabled} class="tip-button card">
 		<svg viewBox="0 0 16 12" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M0 2a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2H0Zm0 2v6a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V4H0Zm3 5a1 1 0 0 1 1-1h1a1 1 0 0 1 0 2H4a1 1 0 0 1-1-1Z" fill="currentColor"/></svg>
@@ -65,19 +66,22 @@
 		flex-flow: column nowrap;
 		gap: 8px;
 		width: 100%;
+
+		--button-radius: max(var(--radius) - 2px, 4px); /* Paypal/payment request buttons are rounded to 4px irrevocably */
 	}
 
 	.methods :global(.tip-button) {
+		border-radius: var(--button-radius);
 		height: var(--button-height);
 		white-space: nowrap;
+	}
+
+	.wallet, .paypal {
+		clip-path: inset(0 0 0 0 round var(--button-radius));
 	}
 
 	.paypal {
 		height: var(--button-height);
 		overflow: hidden;
-	}
-
-	.paypal > :global(.paypal-buttons) {
-		display: block !important;
 	}
 </style>

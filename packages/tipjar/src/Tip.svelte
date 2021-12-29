@@ -2,9 +2,11 @@
 	import { onMount } from 'svelte'
 	import MoneyInput from './MoneyInput.svelte'
 	import PaymentMethod from './PaymentMethod.svelte'
-	import { Frequency } from './const'
+	import { parseToHsla, hsla } from 'color2k'
+	import { Frequency } from './lib/const'
 
 	export let autofocus = true
+	export let radius = ''
 	export let tipping
 
 	let didTip = false, leaving = false
@@ -36,7 +38,14 @@
 	}
 </script>
 
-<div class="tip" class:tipping class:leaving on:animationend={() => leaving = false} aria-hidden={!tipping}>
+<div class="tip"
+	class:tipping class:leaving
+	on:animationend={() => leaving = false}
+	aria-hidden={!tipping}
+	style="
+		--radius: min({radius}, 46px); /* TODO: less arbitrary max here */
+	"
+>
 	<form novalidate>
 		<div class="select">
 			<select id="frequency" bind:value={selected} bind:this={select}>
@@ -56,49 +65,49 @@
 		<PaymentMethod {amount} />
 	</form>
 </div>
-
+	
 <style>
-	@keyframes come-in {
+	@keyframes tip-appear {
 		from {
-			filter: blur(5px);
-			opacity: 1;
-			transform: rotateX(-25deg);
+			filter: blur(2px);
+			transform: rotateX(30deg) translateZ(-75px); /* not a hack, it has to be behind the jar */
 		}
 
-		to {
+		25%, to {
 			opacity: 1;
 		}
 	}
 
-	@keyframes leave {
+	@keyframes tip-leave {
 		from {
 			opacity: 1;
 		}
-
 		to {
-			filter: blur(5px);
+			filter: blur(2px);
 			opacity: 0;
 			transform: translateY(-2rem);
 		}
 	}
 
 	.tip {
-		background: #fff;
-		border-radius: min(var(--radius), 9px);
-		box-shadow: var(--shadow);
-		bottom: calc(100% + 12px + var(--height, 0) * .035px);
-		/* https://css-tricks.com/snippets/css/system-font-stack/ */
+		background: var(--bg);
+		border-radius: var(--radius);
+		box-shadow: 0 2px 20px rgba(0,0,0,0.03);
+		bottom: calc(100% - calc(var(--size-1) - var(--size-0)));
+		left: calc(var(--size-1) * -1);
 		font-family: var(--font-family);
-		padding: var(--size-0);
+		padding: var(--size-1);
 		min-width: 250px;
 		position: absolute;
 		opacity: 0;
 		overflow: hidden;
 		pointer-events: none;
-		transform-origin: 50% calc(100% + var(--height, 0) * 3px);
+		transform-origin: calc(var(--width) * 1px / 2 + var(--size-0)) 100%;
 
+		--bg: #fff;
 		--black: #000;
 		--gray: #8E8E8E;
+		/* https://css-tricks.com/snippets/css/system-font-stack/ */
 		--font-family: system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Oxygen-Sans,Ubuntu,Cantarell,"Helvetica Neue",sans-serif;;
 		--font-size: min(16px, 1rem); /* iOS tries zooming into inputs less than 16px */
 		--size--1: calc(var(--font-size) * 0.75);
@@ -107,13 +116,14 @@
 	}
 
 		.tip.tipping {
-			animation: come-in 0.35s cubic-bezier(0.33, 1, 0.68, 1) both;
+			animation: tip-appear 450ms cubic-bezier(0.33, 1, 0.68, 1) both;
 			pointer-events: auto;
 		}
 
 		.tip.leaving {
-			animation: leave 0.35s cubic-bezier(0.33, 1, 0.68, 1) both;
+			animation: tip-leave 250ms linear both;
 		}
+
 
 	input, select, label {
 		font-family: var(--font-family);
@@ -155,7 +165,7 @@
 		}
 
 		.select label {
-			background: #fff;
+			background: var(--bg);
 			border-radius: 4px;
 			color: var(--gray);
 			display: block;
