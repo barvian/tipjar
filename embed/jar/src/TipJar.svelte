@@ -3,17 +3,19 @@
   import { loadStripe } from '@stripe/stripe-js'
   import { loadScript as loadPaypal } from '@paypal/paypal-js'
   import Tip from './Tip.svelte'
+  import Slice from './Slice.svelte'
   import Coins, { loadMatter } from './Coins.svelte'
-  import { darken, parseToHsla } from 'color2k'
+  import { parseToHsla } from 'color2k'
+  import { isInView } from './lib/util'
   import { stripeKey, paypalKey } from './lib/const'
 
-  export let radius = '60em'
-  export let color = '#50769A'
+  export let radius = '60rem'
+  export let color = '#fff' // TODO: strip alpha from this because it'll mess with back elements
   export let label = 'Donate'
   export let labelFontFamily = "sans-serif"
   export let labelFontWeight = 600
   export let labelFontSize = '1rem'
-  export let labelColor = '#fff'
+  export let labelColor = '#000'
   export let labelLetterSpacing = 0
   export let labelTextTransform = 'none'
   export let popupRadius
@@ -24,17 +26,18 @@
   let jar, coins, base
   let tipping = false
 
-  let w, h, r, c, shadowHsl
+  let w, h, r, c, d
   $: if (base) { // compute actual radius in px
     const radiusPx = getComputedStyle(base).getPropertyValue('border-radius')
     const int = parseInt(radiusPx, 10)
     r = h ? Math.min(h / 2, int) : int
   }
-  $: c = base && getComputedStyle(base).getPropertyValue('background-color') // in case they passed in a variable
-  $: if (c) { // Generate shadow hsl parts
-    const hsla = parseToHsla(c)
-    shadowHsl = `${hsla[0]},${hsla[1]*100}%,15%`
+  $: if (base) {
+     // in case they passed in a variable:
+    const computed = getComputedStyle(base).getPropertyValue('background-color')
+    c = parseToHsla(computed)
   }
+  $: d = h
 
   setContext(stripeKey, loadStripe(stripePublishableKey))
   setContext(paypalKey, loadPaypal({ 'client-id': paypalClientId }))
@@ -88,8 +91,10 @@
 <div class="wrapper" bind:this={wrapper} style="
   --height: {h};
   --width: {w};
-  --radius: {r ? `${r}px` : radius};
-  --shadow-hsl: {shadowHsl ?? '0,0%,0%'};
+  --radius: {r != null ? `${r}px` : radius};
+  --color-hue: {c ? c[0] : 0};
+  --color-saturation: {c ? c[1]*100 : 0}%;
+  --color-lightness: {c ? c[2]*100 : 0}%;
 ">
   <Tip {tipping} radius={popupRadius || `${r}px`} />
 
@@ -102,6 +107,7 @@
     aria-expanded={tipping} aria-controls="tip"
     style="
       --color: {color};
+      --depth: {d};
       --label-color: {labelColor};
       --label-font-family: {labelFontFamily};
       --label-font-weight: {labelFontWeight};
@@ -111,13 +117,19 @@
       --hole-space: {w ? w - r*2 + 10: 0};
     "
   >
-    <div class="base" bind:this={base}>
+    <div class="shadow" />
+    {#if d}
+      {#each Array(d / 4) as _, i}
+        <Slice {r} {w} {h} {d} z={d/2 - i*  2} />
+      {/each}
+    {/if}
+    <Slice {r} {w} {h} {d} class="base" bind:el={base}>
       {#await loadMatter() then matter}
-        {#if w && h && c && r != null}
-        <Coins {w} {h} {r} {c} paused={tipping} {matter} bind:this={coins} />
+        {#if w && h && c && jar && r != null}
+        <Coins {w} {h} {r} {c} paused={tipping} {matter}, inView={isInView(jar)} bind:this={coins} />
         {/if}
       {/await}
-    </div>
+    </Slice>
     <span>{label}</span>
     <div class="opening"></div>
   </div>
@@ -126,21 +138,15 @@
 <style>
   .wrapper {
     position: relative; /* todo: param for this; */
-    perspective: 800px;
+    perspective: calc(var(--perspective) * 1px);
     width: min-content;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
 
-    --transition: 250ms /*cubic-bezier(0.33, 1, 0.68, 1)*/ease-out;
-    /*
-     * Layer for more realistic effect
-     * See:  https://tobiasahlin.com/blog/layered-smooth-box-shadows/
-     */
-    --shadow: 
-      0 2px 6px -1px hsla(var(--shadow-hsl), 0.03),
-      0 4px 12px -4px hsla(var(--shadow-hsl), 0.05),
-      0 8px 20px -4px hsla(var(--shadow-hsl), 0.07)
-    ;
+    --color: hsl(var(--color-hue), var(--color-saturation), var(--color-lightness));
+    --perspective: 800;
+    --transition-duration: 250ms;
+    --transition-timing-function: /*cubic-bezier(0.33, 1, 0.68, 1)*/ease-out;
   }
 
     .wrapper :global(*), .wrapper :global(*::before), .wrapper :global(*::after) {
@@ -169,7 +175,9 @@
     text-transform: var(--label-text-transform);
     transform-origin: 50% 300%;
     transform-style: preserve-3d;
-    transition: filter var(--transition), transform var(--transition);
+    transition-property: filter, transform;
+    transition-duration: var(--transition-duration);
+    transition-timing-function: var(--transition-timing-function);
     /*width: 76px;*/
     /*height: 66px;*/
     will-change: transform;
@@ -184,10 +192,17 @@
     .jar.tipping, :global(.is-dragover:root) .jar {
       transform: var(--open-transform);
     }
+    .jar.tipping :global(.base), :global(.is-dragover:root) .jar :global(.base) {
+      --shade-size: var(--open-shade-size);
+    }
     @media (hover:  hover) {
       .jar:hover {
         transform: var(--open-transform);
       }
+
+        .jar:hover :global(.base) {
+          --shade-size: var(--open-shade-size);
+        }
 
       .jar:active {
         transform: var(--open-transform) translateY(2px);
@@ -195,55 +210,66 @@
       }
     }
 
-  .base {
-    /*backdrop-filter: blur(4px); this kills it in Chrome*/
-    background-color: var(--color);
-    border-radius: var(--radius);
-    box-shadow: var(--shadow);
-    position: absolute;
-    overflow: hidden;
-    top: 0;
-    transition: transform var(--transition);
-    transform: translateZ(-24px) scale(1.035); /* scale visually undoes Z translation */
-    transform-origin: center;
-    left: 0;
-    width: 100%;
-    height: 100%;
-
-    /* compensate for the lack of actual 3d by scaling upward too */
-    --open-transform: translateZ(-24px) scale(1.035)/*, 1.085) translateY(5%)*/;
+  .shadow {
+    /*
+     * Layer for more realistic effect
+     * See:  https://tobiasahlin.com/blog/layered-smooth-box-shadows/
+     * Spread should offset the translateZ
+     */
+    box-shadow: 
+      0 2px 6px 0px hsla(var(--hsl), 0.03),
+      0 4px 12px -2px hsla(var(--hsl), 0.05),
+      0 8px 20px -2px hsla(var(--hsl), 0.07)
+    ;
+    --hsl: var(--color-hue, 0), var(--color-saturation, 0%), 15%;
   }
 
-    @media (hover: hover) {
-      .jar:hover .base {
-        transform: var(--open-transform);
-      }
-    }
-    .jar.tipping .base, :global(.is-dragover:root) .jar .base {
-      transform: var(--open-transform);
-    }
+  .jar :global(.base) {
+    --shade-size: 0px;
+    --open-shade-size: clamp(7px, var(--radius), 12px);
+  } 
 
-    /* Border to maintain contrast despite coins */
-    .base::after {
-      box-shadow: inset 0 0 0/*3px TODO turn this on via glassiness*/ 1px var(--color);
+    /* Border to maintain contrast despite coins and a gradient shade to help open state */
+    .jar :global(.base)::after {
+      box-shadow:
+        inset 0 var(--shade-size) var(--shade-size) calc(-1*var(--shade-size)) var(--color),
+        inset 0 var(--shade-size) var(--shade-size) calc(-1*var(--shade-size)) var(--color),
+        inset 0 var(--shade-size) var(--shade-size) calc(-1*var(--shade-size)) var(--color),
+        inset 0 var(--shade-size) var(--shade-size) calc(-1*var(--shade-size)) var(--color),
+        inset 0 var(--shade-size) var(--shade-size) calc(-1*var(--shade-size)) var(--color),
+        inset 0 0 0/*3px TODO turn this on via glassiness*/ 1px var(--color)
+      ;
       border-radius: var(--radius);
       content: '';
       opacity: 0.8;
       position: absolute;
+      transition: box-shadow var(--transition-duration) var(--transition-timing-function);
       top: 0;
       left: 0;
       height: 100%;
       width: 100%;
     }
 
+  .jar :global(.coins) {
+    /* Does a better job than overflow: hidden with border-radius */
+    clip-path: inset(0 0 0 0 round var(--radius));
+  }
+
+  span {
+    position: relative;
+  }
+
   .opening {
     position: absolute;
-    background: linear-gradient(to bottom, rgba(0,0,0,0.05) 0%, rgba(0,0,0,0.12) 130%);
+    background: linear-gradient(to bottom, hsl(var(--color-hue), var(--color-saturation), calc(var(--color-lightness) - 12%)), hsl(var(--color-hue), var(--color-saturation), calc(var(--color-lightness) - 20%)));
     border-radius: 100%;
+    opacity: 0.5;
     box-shadow: 0 1px 1px rgba(255, 255, 255, 0.15);
-    transform: translate3d(-50%, 1px, -24px) rotateX(90deg) scaleX(clamp(0.1, var(--hole-space) / var(--hole), 1)); /* help the transition in case the hole is bigger than what's visually allowed */
-    transition: transform var(--transition);
-    transform-origin: 50% 0%;
+    /*
+     * Scale helps the transition in case the hole is bigger than what's visually allowed,
+     * translateY keeps it out of the way from the base and back planes (lowest number that works)
+     */
+    transform: translate3d(-50%, calc(-50%), calc(var(--depth)*1px / -2)) rotateX(90deg) scaleX(clamp(0.1, var(--hole-space) / var(--hole), 1));
     backface-visibility: hidden;
     left: 50%;
     top: 0;

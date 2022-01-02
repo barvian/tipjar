@@ -10,8 +10,8 @@
 <script>
   import { onMount, onDestroy } from 'svelte'
   import { latestTip } from './lib/stores'
-  import { darken, toRgba } from 'color2k'
-  import { pageLoaded, sleep, isInView } from './lib/util'
+  import { hsla, toRgba } from 'color2k'
+  import { pageLoaded, sleep } from './lib/util'
 
   export let w
   export let h
@@ -19,8 +19,15 @@
   export let c
   export let paused = false
   export let matter
+  export let inView
 
   const things = []
+
+  // Increase chance of smooth initial animation
+  const loadDelay = Promise.all([
+    pageLoaded.then(() => sleep(500)), // at least 500ms after page finished loading, and...
+    inView // the jar is in view
+  ])
 
   const engine = matter.Engine.create({
     enableSleeping: true // puts bodies to sleep when they come to rest, saves a lot on perf
@@ -46,12 +53,6 @@
     matter.Render.run(render)
     matter.Runner.run(runner, engine)
 
-    // Increase chance of smooth initial animation
-    await pageLoaded
-    await sleep(500)
-    // I don't like the idea of doing this on a transformed element
-    await isInView(wrapper?.closest && wrapper?.closest('.jar'))
-
     // Add walls
     matter.Composite.add(world, [
         matter.Bodies.rectangle(w / 2, h+5, w, 10, { isStatic: true, render: { visible: false } }), // bottom
@@ -71,6 +72,9 @@
         })
     ])
 
+    // Increase chance of smooth initial animation
+    await loadDelay
+
     const stack = matter.Composites.stack(w / 2 - 12, -40, 3, 4, 0, 0, (x, y) => addCoin({ x, y, add: false }))
 
     matter.Composite.add(world, stack)
@@ -82,16 +86,16 @@
       matter.Engine.clear(engine)
   })
 
-  function addCoin({ x, y = 0, add = true } = {}) {
-    const [size, darkenAmount] = matter.Common.choose([[3, .6*.1], [4, .8*.1], [5, .1]])
+  function addCoin({ x, y = -5, add = true } = {}) {
+    const [size, darkenAmount] = matter.Common.choose([[3, .06], [4, .08], [5, .1]])
     const coin = matter.Bodies.circle(x ?? w/2 - size/2 + 1, y, size, {
       restitution: 0.75,
       render: {
-        fillStyle: toRgba(darken(c, darkenAmount))
+        fillStyle: toRgba(hsla(c[0], c[1], c[2]-darkenAmount, 1))
       }
     })
 
-    if (add) matter.Composite.add(world, coin)
+    if (add) loadDelay.then(() => { matter.Composite.add(world, coin) })
     things.push(coin)
     return coin
   }
@@ -113,7 +117,7 @@
   }
 
   // setInterval(() => Common.choose([addNote(), addCoin()]), 1500)
-  // setInterval(addCoin, 1500)
+  // setInterval(addCoin, 250)
 </script>
 
-<div style="width: min-content" bind:this={wrapper}></div>
+<div class="coins" style="width: min-content" bind:this={wrapper}></div>

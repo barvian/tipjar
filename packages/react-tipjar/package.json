@@ -1,5 +1,5 @@
 {
-  "name": "@tipjar/react-tipjar",
+  "name": "@tipkit/react-jar",
   "version": "0.1.0",
   "module": "dist/index.mjs",
   "main": "dist/index.js",
@@ -13,7 +13,7 @@
   },
   "dependencies": {
     "react": "^17.0.2",
-    "@tipjar/tipjar": "*"
+    "@tipkit/jar": "*"
   },
   "keywords": [
     "react"

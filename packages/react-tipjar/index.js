@@ -1,5 +1,5 @@
 import React, { useRef, useEffect, useState } from 'react'
-import TipJar from '@tipjar/tipjar'
+import TipJar from '@tipkit/jar'
 
 export default function ReactTipJar(props) {
   const container = useRef(null)

@@ -1,21 +1,20 @@
 {
   "private": true,
   "workspaces": [
-    "packages/*",
-    "embed",
-    "api",
-    "site"
+    "jar"
   ],
   "scripts": {
     "build": "turbo run build",
-    "dev": "turbo run dev --no-cache --parallel --continue",
+    "dev": "concurrently 'turbo run dev --no-cache --parallel --continue' 'serve -p 5000'",
     "lint": "turbo run lint",
     "test": "turbo run test",
     "clean": "turbo run clean && rm -rf node_modules",
     "format": "prettier --write \"**/*.{js,md}\""
   },
   "devDependencies": {
+    "concurrently": "^6.5.1",
     "prettier": "^2.5.1",
+    "serve": "^13.0.2",
     "turbo": "latest"
   },
   "turbo": {

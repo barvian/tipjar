@@ -21,3 +21,6 @@ export const isInView = el => new Promise(resolve => {
 })
 
 export const sleep = ms => new Promise(resolve => setTimeout(resolve, ms))
+
+// Wrap value in Promise if it isn't one already
+export const p = value => Promise.resolve(value)

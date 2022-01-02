@@ -1,5 +1,5 @@
 {
-  "name": "@tipjar/tipjar",
+  "name": "@tipkit/jar",
   "version": "0.1.0",
   "svelte": "src/index.js",
   "module": "dist/index.mjs",
@@ -28,7 +28,6 @@
   "dependencies": {
     "@paypal/paypal-js": "^4.2.2",
     "@stripe/stripe-js": "^1.22.0",
-    "color2k": "^1.2.4",
-    "firebase": "9.4.1"
+    "color2k": "^1.2.4"
   }
 }

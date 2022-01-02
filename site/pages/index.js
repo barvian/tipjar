@@ -1,4 +1,4 @@
-import TipJar from '@tipjar/react-tipjar'
+import TipJar from '@tipkit/react-jar'
 
 export default function Home() {
 	return (
