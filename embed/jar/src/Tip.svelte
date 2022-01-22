@@ -1,13 +1,15 @@
 <script>
 	import { onMount } from 'svelte'
 	import MoneyInput from './MoneyInput.svelte'
-	import PaymentMethod from './PaymentMethod.svelte'
+	import Pay from './Pay/Pay.svelte'
 	import { parseToHsla, hsla } from 'color2k'
 	import { Frequency } from './lib/const'
 
 	export let autofocus = true
 	export let radius = ''
+	export let label
 	export let tipping
+	export let paypalClientId
 
 	let didTip = false, leaving = false
 	$: if (tipping) didTip = true
@@ -17,6 +19,8 @@
 
 	let select, input, selected = 'ONE_TIME', frequency, amount
 	$: frequency = Frequency[selected]
+
+	let paying
 
 	onMount(() => {
 		requestAnimationFrame(() => {
@@ -43,27 +47,29 @@
 	on:animationend={() => leaving = false}
 	aria-hidden={!tipping}
 	style="
-		--radius: min({radius}, 46px); /* TODO: less arbitrary max here */
+		--radius: min({radius}, 9px);
 	"
 >
-	<form novalidate>
-		<div class="select">
-			<select id="frequency" bind:value={selected} bind:this={select}>
-				<option value="ONE_TIME">{Frequency.ONE_TIME.label}</option>
-				<optgroup label="Recurring (Manage/cancel via email receipts)">
-					{#each Frequency.RECURRING as freq}
-					<option value={freq[0]}>{freq[1].label}</option>
-					{/each}
-				</optgroup>
-			</select>
-			<label for="frequency">
-				{frequency.label}
-				<svg viewBox="0 0 9 6" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="m1 1 3.5 3.5L8 1" stroke="currentColor" stroke-width="1.5"/></svg>
-			</label>
-		</div>
-		<MoneyInput bind:this={input} bind:value={amount} on:click={handleInputClick} {readonly} />
-		<PaymentMethod {amount} />
-	</form>
+	{#if !paying}
+	<div class="select">
+		<select id="frequency" bind:value={selected} bind:this={select}>
+			<option value="ONE_TIME">{Frequency.ONE_TIME.label}</option>
+			<optgroup label="Recurring (Manage/cancel via email receipts)">
+				{#each Frequency.RECURRING as freq}
+				<option value={freq[0]}>{freq[1].label}</option>
+				{/each}
+			</optgroup>
+		</select>
+		<label for="frequency">
+			{frequency.label}
+			<svg viewBox="0 0 9 6" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="m1 1 3.5 3.5L8 1" stroke="currentColor" stroke-width="1.5"/></svg>
+		</label>
+	</div>
+	<MoneyInput bind:this={input} bind:value={amount} on:click={handleInputClick} {readonly} />
+	{:else}
+	<span>{amount}, {frequency.label}</span>
+	{/if}
+	<Pay {label} {amount} {frequency} {paypalClientId} bind:paying />
 </div>
 	
 <style>
@@ -130,20 +136,11 @@
 		font-size: var(--font-size);
 	}
 
-	.tip :global(.tip-button) {
+	.tip :global(.tipkit-btn) {
 		display: block;
 		font-family: var(--font-family);
 		font-size: var(--font-size);
-	}
-
-	.tip :global(.methods) {
-		margin-top: var(--size--1);
-	}
-
-	form {
-		display: flex;
-		flex-flow: column nowrap;
-		align-items: center;
+		width: 100%;
 	}
 
 	.select {

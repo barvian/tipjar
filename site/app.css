@@ -16,7 +16,7 @@
 	--sans: 'Syne', sans-serif;
 	--black: #000;
 	--white: #fff;
-	--beige: #E3DCD7;
+	--beige: 	#dedede;
 	--heading-color: #201F1E;
 	--text-color: #605C59;
 	--width: 58rem;
@@ -26,6 +26,7 @@
 }
 
 body {
+	align-items: center;
 	min-height: 100vh;
 	display: flex;
 	flex-flow: column nowrap;

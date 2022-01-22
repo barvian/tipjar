@@ -2,24 +2,34 @@
 	export let z = 0
 	export let w = 0
 	export let h = 0
-	export let r = 0
+	export let yR = 0
 	export let d = 0
 	export let el
 
-	let zR, straightX, straightY, triangleHeight, triangleWidth
-	$: zR = Math.min(r, d / 2)
+	let zR, straightX, straightY, xTriangleHeight, xTriangleWidth, yTriangleHeight, yTriangleWidth
+	$: zR = Math.min(yR, d / 2)
+
+	/* Compute the scaleX by solving for
+	 *  ____________________
+	 * /|                  |\
+	 * ---------------------- midline (d/2)
+	 * ^     straightX (part that isn't affected by radius)
+	 */
 	$: straightX = w - zR*2
-	$: straightY = h - zR*2
-	$: triangleHeight = Math.max(0, z - (d / 2 - zR))
-	$: triangleWidth = Math.sqrt(zR*zR - triangleHeight*triangleHeight)
-	$: console.log(z, (straightX + triangleWidth*2) / w, (straightY + triangleWidth*2) / h)
+	$: xTriangleHeight = Math.max(0, z - (d / 2 - zR))
+	$: xTriangleWidth = Math.sqrt(zR*zR - xTriangleHeight*xTriangleHeight)
+
+	/* scaleY is mostly the same */
+	$: straightY = h - yR*2
+	$: yTriangleHeight = Math.max(0, z - (d / 2 - yR))
+	$: yTriangleWidth = Math.sqrt(yR*yR - yTriangleHeight*yTriangleHeight)
 </script>
 
 <div class="slice {$$props.class || ''}"
 	bind:this={el}
 	style="
-		--scaleX: {(straightX + triangleWidth*2) / w};
-		--scaleY: {(straightY + triangleWidth*2) / h};
+		--scaleX: {(straightX + xTriangleWidth*2) / w};
+		--scaleY: {(straightY + yTriangleWidth*2) / h};
 		--z: {z}px;
 	"
 >

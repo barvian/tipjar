@@ -1,13 +1,13 @@
 <script>
   import { onMount, setContext } from 'svelte'
   import { loadStripe } from '@stripe/stripe-js'
-  import { loadScript as loadPaypal } from '@paypal/paypal-js'
   import Tip from './Tip.svelte'
   import Slice from './Slice.svelte'
   import Coins, { loadMatter } from './Coins.svelte'
   import { parseToHsla } from 'color2k'
   import { isInView } from './lib/util'
   import { stripeKey, paypalKey } from './lib/const'
+  import ApiClient from './lib/api'
 
   export let radius = '60rem'
   export let color = '#fff' // TODO: strip alpha from this because it'll mess with back elements
@@ -20,8 +20,15 @@
   export let labelTextTransform = 'none'
   export let popupRadius
   
+  export let id
   export let stripePublishableKey
   export let paypalClientId
+  const client = new ApiClient(id)
+  $: client.id = id
+  export let eventTarget = client
+  export let createPaymentIntent = client.createPaymentIntent
+  export let updatePaymentIntent = client.updatePaymentIntent
+  export let getPaypalPlanId = client.getPaypalPlanId
 
   let jar, coins, base
   let tipping = false
@@ -40,51 +47,20 @@
   $: d = h
 
   setContext(stripeKey, loadStripe(stripePublishableKey))
-  setContext(paypalKey, loadPaypal({ 'client-id': paypalClientId }))
 
   onMount(() => {
     document.addEventListener('click', onDocumentClick, false)
-    // Add class to page upon dragging
-    document.addEventListener('dragover', onDocumentDrag, false) // prevent opening file
-    document.addEventListener('dragenter', onDocumentDrag, false)
-    document.addEventListener('dragleave', onDocumentDragEnd, false)
-    document.addEventListener('drop', onDocumentDragEnd, false) // prevent opening file
+    client?.listen()
 
     return () => {
       document.removeEventListener('click', onDocumentClick)
-      document.removeEventListener('dragover', onDocumentDrag)
-      document.removeEventListener('dragenter', onDocumentDrag)
-      document.removeEventListener('dragleave', onDocumentDragEnd)
-      document.removeEventListener('drop', onDocumentDragEnd)
+      client?.close()
     }
   })
 
   let wrapper
   function onDocumentClick(event) {
-    if (tipping && wrapper && !wrapper.contains(event.target)) tipping = false
-  }
-
-  function onDocumentDrag(event) {
-    event.preventDefault()
-    document.documentElement.classList.add('is-dragover')
-  }
-
-  function onDocumentDragEnd(event) {
-    document.documentElement.classList.remove('is-dragover')
-    if (event.type === 'drop' && event.target === jar || jar?.contains(event.target)) return // let it propagate down
-    event.preventDefault() // disable browser's default
-  }
-
-  function onDrop(event) {
-    event.preventDefault()
-    const text = event.dataTransfer?.getData('text')
-    if (text && coins) coins.addNote()
-  }
-
-  // Apparently necessary to allow the drop:
-  // https://developer.mozilla.org/en-US/docs/Web/API/HTML_Drag_and_Drop_API/File_drag_and_drop#prevent_the_browsers_default_drag_behavior
-  function onDragOver(event) {
-    event.preventDefault()
+    // if (tipping && wrapper && !wrapper.contains(event.target)) tipping = false
   }
 </script>
 
@@ -96,14 +72,13 @@
   --color-saturation: {c ? c[1]*100 : 0}%;
   --color-lightness: {c ? c[2]*100 : 0}%;
 ">
-  <Tip {tipping} radius={popupRadius || `${r}px`} />
+  <Tip {tipping} {label} radius={popupRadius || `${r}px`} {paypalClientId} />
 
   <div class="jar" class:tipping
     bind:clientWidth={w} bind:clientHeight={h}
     bind:this={jar}
     role="button"
     on:click={() => tipping = !tipping}
-    on:drop={onDrop} on:dragover={onDragOver}
     aria-expanded={tipping} aria-controls="tip"
     style="
       --color: {color};
@@ -119,8 +94,8 @@
   >
     <div class="shadow" />
     {#if d}
-      {#each Array(d / 4) as _, i}
-        <Slice {r} {w} {h} {d} z={d/2 - i*  2} />
+      {#each Array(Math.floor(d / 2 / 2)) as _, i}
+        <Slice class={i === 0 ? 'shadow' : ''} r={r} {w} {h} {d} z={d/2 - i*2} />
       {/each}
     {/if}
     <Slice {r} {w} {h} {d} class="base" bind:el={base}>
@@ -210,7 +185,7 @@
       }
     }
 
-  .shadow {
+  .jar :global(.shadow) {
     /*
      * Layer for more realistic effect
      * See:  https://tobiasahlin.com/blog/layered-smooth-box-shadows/
@@ -218,8 +193,8 @@
      */
     box-shadow: 
       0 2px 6px 0px hsla(var(--hsl), 0.03),
-      0 4px 12px -2px hsla(var(--hsl), 0.05),
-      0 8px 20px -2px hsla(var(--hsl), 0.07)
+      0 4px 12px -2px hsla(var(--hsl), 0.03),
+      0 8px 20px -2px hsla(var(--hsl), 0.03)
     ;
     --hsl: var(--color-hue, 0), var(--color-saturation, 0%), 15%;
   }
@@ -269,7 +244,7 @@
      * Scale helps the transition in case the hole is bigger than what's visually allowed,
      * translateY keeps it out of the way from the base and back planes (lowest number that works)
      */
-    transform: translate3d(-50%, calc(-50%), calc(var(--depth)*1px / -2)) rotateX(90deg) scaleX(clamp(0.1, var(--hole-space) / var(--hole), 1));
+    transform: translate3d(-50%, calc(-50% - 1px), calc(var(--depth)*1px / -2)) rotateX(90deg) scaleX(clamp(0.1, var(--hole-space) / var(--hole), 1));
     backface-visibility: hidden;
     left: 50%;
     top: 0;

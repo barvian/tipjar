@@ -41,7 +41,7 @@
       element: wrapper,
       engine,
       options: {
-        pixelRatio: 'auto', // I think it might actually be better a little blurry
+        pixelRatio: 2, // I think it might actually be better a little blurry
         width: w,
         height: h,
         showSleeping: false,
@@ -100,24 +100,23 @@
     return coin
   }
 
-  export function addNote() {
-    const [width, height] = matter.Common.choose([[6, 8], [8, 8]])
-    const note = matter.Bodies.rectangle(w/2 - width/2 + 1, -10, width, height, {
-      friction: 0.1,
-      density: 0.0001,
-      frictionAir: 0.75,
-      render: {
-        fillStyle: '#000'
-      }
-    })
+  // export function addNote() {
+  //   const [width, height] = matter.Common.choose([[6, 8], [8, 8]])
+  //   const note = matter.Bodies.rectangle(w/2 - width/2 + 1, -10, width, height, {
+  //     friction: 0.1,
+  //     density: 0.0001,
+  //     frictionAir: 0.75,
+  //     render: {
+  //       fillStyle: '#000'
+  //     }
+  //   })
 
-    matter.Composite.add(world, note)
-    things.push(note)
-    return note
-  }
+  //   matter.Composite.add(world, note)
+  //   things.push(note)
+  //   return note
+  // }
 
-  // setInterval(() => Common.choose([addNote(), addCoin()]), 1500)
-  // setInterval(addCoin, 250)
+  // setInterval(() => setTimeout(addCoin, matter.Common.choose([0, 250, 500])),  750)
 </script>
 
 <div class="coins" style="width: min-content" bind:this={wrapper}></div>

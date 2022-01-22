@@ -24,3 +24,6 @@ export const sleep = ms => new Promise(resolve => setTimeout(resolve, ms))
 
 // Wrap value in Promise if it isn't one already
 export const p = value => Promise.resolve(value)
+
+// Return unresolved Promise
+export const unresolved = () => new Promise(() => {})
