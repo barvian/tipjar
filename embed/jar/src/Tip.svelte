@@ -9,6 +9,8 @@
 	export let radius = ''
 	export let label
 	export let tipping
+	export let createPaymentIntent
+	export let getPaypalPlanId
 	export let paypalClientId
 
 	let didTip = false, leaving = false
@@ -21,6 +23,7 @@
 	$: frequency = Frequency[selected]
 
 	let paying
+	$: disabled = paying
 
 	onMount(() => {
 		requestAnimationFrame(() => {
@@ -52,7 +55,7 @@
 >
 	{#if !paying}
 	<div class="select">
-		<select id="frequency" bind:value={selected} bind:this={select}>
+		<select {disabled} id="frequency" bind:value={selected} bind:this={select}>
 			<option value="ONE_TIME">{Frequency.ONE_TIME.label}</option>
 			<optgroup label="Recurring (Manage/cancel via email receipts)">
 				{#each Frequency.RECURRING as freq}
@@ -65,11 +68,11 @@
 			<svg viewBox="0 0 9 6" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="m1 1 3.5 3.5L8 1" stroke="currentColor" stroke-width="1.5"/></svg>
 		</label>
 	</div>
-	<MoneyInput bind:this={input} bind:value={amount} on:click={handleInputClick} {readonly} />
+	<MoneyInput {disabled} bind:this={input} bind:value={amount} on:click={handleInputClick} {readonly} />
 	{:else}
 	<span>{amount}, {frequency.label}</span>
 	{/if}
-	<Pay {label} {amount} {frequency} {paypalClientId} bind:paying />
+	<Pay {label} {amount} {frequency} {createPaymentIntent} {getPaypalPlanId} {paypalClientId} bind:paying />
 </div>
 	
 <style>

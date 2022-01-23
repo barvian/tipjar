@@ -9,9 +9,11 @@
 	export let currency = 'usd'
 	export let amount = 0
 	export let frequency
-	export let paypalClientId
 	export let paying = false
 	export let label
+	export let createPaymentIntent
+	export let getPaypalPlanId
+	export let paypalClientId
 
 	const stripeReq = getContext(stripeKey)
 	const buttonHeight = 40
@@ -20,13 +22,13 @@
 </script>
 
 <div class="pay" style="--button-height: {buttonHeight}px;">
-	<!-- <WalletButton height={buttonHeight} {currency} {amount} {frequency} bind:enabled={walletEnabledP} /> -->
+	<!-- <WalletButton {createPaymentIntent} height={buttonHeight} {currency} {amount} {frequency} bind:enabled={walletEnabledP} /> -->
 	<!-- {#await walletEnabledP then walletEnabled} -->
 		<!-- {#if !walletEnabled} -->
-			<NonWalletButton {label} bind:paying {amount} {frequency} />
+			<NonWalletButton {createPaymentIntent} startPaying={!paypalClientId} {label} bind:paying {amount} {frequency} />
 			{#if paypalClientId}
 				<span class="tipkit-or" hidden={paying}>or</span>
-				<PaypalButton height={buttonHeight} hidden={paying} {currency} {amount} {frequency} {paypalClientId} />
+				<PaypalButton height={buttonHeight} hidden={paying} {currency} {amount} {frequency} {paypalClientId} {getPaypalPlanId} />
 			{/if}
 		<!-- {/if} -->
 	<!-- {/await} -->

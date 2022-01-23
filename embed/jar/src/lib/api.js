@@ -1,45 +1,56 @@
 import { Frequency } from './const'
 
-const BASE_URL = DEV ? 'http://localhost:4242/v1' : 
-	'https://api.tipkit.io/v1'
-
-class DonationStream extends EventTarget {
-  doSomething() {
-    this.dispatchEvent(new Event('something'));
-  }
-}
-
-export class ApiClient extends EventTarget {
+export default class ApiClient extends EventTarget {
 	set id(val) { this.close(); return this._id = val }
 	get id() { return this._id }
 
 	constructor(id) {
+		super()
 		this.id = id
+
 		this.onMessage = this.onMessage.bind(this)
+		this.createPaymentIntent = this.createPaymentIntent.bind(this)
 	}
 
 	get eventSource() {
-		if (!this._eventSource) this._eventSource = new EventSource(`${BASE_URL}/${this.id}/events`)
+		if (!this._eventSource) this._eventSource = new EventSource(`__apiRoot/v1/${this.id}/events`)
+		return this._eventSource
 	}
+
+	async _fetch(path, { method = 'GET', timeout = 10000, body = {}, ...params } = {}) {
+		const controller = new AbortController()
+		const id = setTimeout(() => controller.abort(), timeout)
+
+		const response = await fetch(`__apiRoot${path}`, {
+			...params,
+			method,
+			body: JSON.stringify(body),
+			signal: controller.signal
+		})
+		clearTimeout(id)
+		return response
+	}
+
+	get(path, params) { return this._fetch(path, { ...params, method: 'GET' }) }
+	post(path, params) { return this._fetch(path, { ...params, method: 'POST' }) }
 
 	async createPaymentIntent({ amount, frequency, email } = {}) {
-		return fetch(`${BASE_URL}/${this.id}/create-payment-intent`, {
-			method: 'POST',
-			body: JSON.stringify({ amount, frequency: frequency.value, email })
+		return this.post(`/v1/${this.id}/create-payment-intent`, {
+			body: { amount, frequency: frequency.value, email },
+			timeout: 5000
 		})
 	}
 
-	async updatePaymentIntent({ client_secret, email } = {}) {
-		return fetch(`${BASE_URL}/${this.id}/update-payment-intent`, {
-			method: 'POST',
-			body: JSON.stringify({ client_secret, email })
-		})
-	}
+	// async updatePaymentIntent({ client_secret, email } = {}) {
+	// 	return fetch(`${BASE_URL}/${this.id}/update-payment-intent`, {
+	// 		method: 'POST',
+	// 		body: JSON.stringify({ client_secret, email })
+	// 	})
+	// }
 
 	async getPaypalPlanId({ amount, frequency } = {}) {
-		return fetch(`${BASE_URL}/${this.id}/get-paypal-plan-id`, {
-			method: 'GET',
-			body: JSON.stringify({ amount, frequency: frequency.value })
+		return this.get(`${BASE_URL}/${this.id}/get-paypal-plan-id`, {
+			body: { amount, frequency: frequency.value }
 		})
 	}
 

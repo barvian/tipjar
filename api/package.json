@@ -1,7 +1,7 @@
 {
-  "name": "tipkit-api",
-  "version": "1.0.0",
   "private": true,
+  "name": "api",
+  "version": "1.0.0",
   "main": "index.js",
   "scripts": {
     "dev": "yarn start",

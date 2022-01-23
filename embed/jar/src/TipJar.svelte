@@ -18,16 +18,15 @@
   export let labelColor = '#000'
   export let labelLetterSpacing = 0
   export let labelTextTransform = 'none'
-  export let popupRadius
   
   export let id
   export let stripePublishableKey
   export let paypalClientId
   const client = new ApiClient(id)
   $: client.id = id
-  export let eventTarget = client
+  export let eventStream = client
   export let createPaymentIntent = client.createPaymentIntent
-  export let updatePaymentIntent = client.updatePaymentIntent
+  console.log(createPaymentIntent)
   export let getPaypalPlanId = client.getPaypalPlanId
 
   let jar, coins, base
@@ -72,7 +71,7 @@
   --color-saturation: {c ? c[1]*100 : 0}%;
   --color-lightness: {c ? c[2]*100 : 0}%;
 ">
-  <Tip {tipping} {label} radius={popupRadius || `${r}px`} {paypalClientId} />
+  <Tip {tipping} {label} {radius} {createPaymentIntent} {getPaypalPlanId} {paypalClientId} />
 
   <div class="jar" class:tipping
     bind:clientWidth={w} bind:clientHeight={h}

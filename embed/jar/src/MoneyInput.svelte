@@ -2,6 +2,7 @@
 	export let value = 0
 	export let floating
 	export let autofocus = false
+	export let disabled = false
 	export let readonly = false
 
 	const formatter = new Intl.NumberFormat('en-US', {
@@ -49,6 +50,7 @@
 		value={textValue}
 		on:keydown={handleKeyDown}
 		on:click
+		{disabled}
 		{readonly}
 	/>
 	<div class="filler" aria-hidden>

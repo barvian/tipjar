@@ -1,5 +1,7 @@
 {
   "private": true,
+  "name": "embed",
+  "version": "1.0.0",
   "workspaces": [
     "jar"
   ],
