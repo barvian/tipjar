@@ -5,12 +5,18 @@
   "main": "index.js",
   "scripts": {
     "dev": "yarn start",
-    "start": "node index.js"
+    "start": "nodemon -r dotenv/config index.js"
   },
   "engines": {
     "node": ">= 12.0.0"
   },
-  "dependencies": { 
-    "express": "^4.17.2"
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.17.2",
+    "stripe": "^8.199.0"
+  },
+  "devDependencies": {
+    "dotenv": "^14.2.0",
+    "nodemon": "^2.0.15"
   }
 }

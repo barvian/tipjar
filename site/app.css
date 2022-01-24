@@ -30,7 +30,7 @@ body {
 	min-height: 100vh;
 	display: flex;
 	flex-flow: column nowrap;
-	justify-content:  center;
+	justify-content: flex-end;
 	padding: var(--space-2) max(10vw, 1.25rem);
 	overflow: hidden;
 }

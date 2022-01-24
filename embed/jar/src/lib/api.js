@@ -1,4 +1,4 @@
-import { Frequency } from './const'
+import { Frequency, APIErrorCode } from './const'
 
 export default class ApiClient extends EventTarget {
 	set id(val) { this.close(); return this._id = val }
@@ -13,19 +13,35 @@ export default class ApiClient extends EventTarget {
 	}
 
 	get eventSource() {
-		if (!this._eventSource) this._eventSource = new EventSource(`__apiRoot/v1/${this.id}/events`)
+		if (!this._eventSource) this._eventSource = new EventSource(this.baseUrl+'/events')
 		return this._eventSource
 	}
 
-	async _fetch(path, { method = 'GET', timeout = 10000, body = {}, ...params } = {}) {
+	get baseUrl() {
+		return `__apiRoot/v1${this.id === 'self' ? '' : this.id}`
+	}
+
+	async _fetch(path, { method = 'GET', timeout = 30000, body = {}, ...params } = {}) {
 		const controller = new AbortController()
 		const id = setTimeout(() => controller.abort(), timeout)
 
-		const response = await fetch(`__apiRoot${path}`, {
+		const response = await fetch(this.baseUrl+path, {
 			...params,
 			method,
 			body: JSON.stringify(body),
+			headers: {
+				'Content-Type': 'application/json'
+			},
 			signal: controller.signal
+		}).then(async res => {
+			if (res.ok) return res.json()
+
+			let json
+			try {
+				json = await res.json()
+				if (json?.error?.code) json.error.code = APIErrorCode.fromJSON(json.error.code)
+			} catch (error) { }
+			return Promise.reject(json?.error || json || res)
 		})
 		clearTimeout(id)
 		return response
@@ -34,10 +50,9 @@ export default class ApiClient extends EventTarget {
 	get(path, params) { return this._fetch(path, { ...params, method: 'GET' }) }
 	post(path, params) { return this._fetch(path, { ...params, method: 'POST' }) }
 
-	async createPaymentIntent({ amount, frequency, email } = {}) {
-		return this.post(`/v1/${this.id}/create-payment-intent`, {
-			body: { amount, frequency: frequency.value, email },
-			timeout: 5000
+	async createPaymentIntent({ amount, frequency, email, currency } = {}) {
+		return this.post('/create-payment-intent', {
+			body: { amount, frequency, email, currency }
 		})
 	}
 
@@ -48,9 +63,9 @@ export default class ApiClient extends EventTarget {
 	// 	})
 	// }
 
-	async getPaypalPlanId({ amount, frequency } = {}) {
+	async getPaypalPlanId({ amount, frequency, currency } = {}) {
 		return this.get(`${BASE_URL}/${this.id}/get-paypal-plan-id`, {
-			body: { amount, frequency: frequency.value }
+			body: { amount, frequency }
 		})
 	}
 

@@ -22,8 +22,8 @@ export default {
 	plugins: [
 		replace({
 	      __apiRoot: dev ?
-	      	'//localhost:8080/' :
-	      	'https://api.tipkit.io/'
+	      	'http://localhost:8080' :
+	      	'https://api.tipkit.io'
 	    }),
 		svelte({
 			preprocess: sveltePreprocess({

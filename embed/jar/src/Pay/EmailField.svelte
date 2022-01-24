@@ -1,13 +1,11 @@
 <script>
-	import { onMount } from 'svelte'
-
 	export let value
 	export let valid = false
 
-	let field
-	const validate = () => valid = field?.validity.valid
-
-	onMount(validate)
+	const validate = (event) => valid = event.target?.validity.valid
 </script>
 
-<input type="email" placeholder="Email (for receipts only)" bind:value on:change={validate} />
+<label>
+	Email (for receipt only)
+	<input type="email" placeholder="Email" bind:value on:input={validate} />
+</label>

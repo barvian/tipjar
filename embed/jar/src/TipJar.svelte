@@ -6,7 +6,7 @@
   import Coins, { loadMatter } from './Coins.svelte'
   import { parseToHsla } from 'color2k'
   import { isInView } from './lib/util'
-  import { stripeKey, paypalKey } from './lib/const'
+  import { stripeKey } from './lib/const'
   import ApiClient from './lib/api'
 
   export let radius = '60rem'
@@ -18,6 +18,7 @@
   export let labelColor = '#000'
   export let labelLetterSpacing = 0
   export let labelTextTransform = 'none'
+  export let currency = 'usd'
   
   export let id
   export let stripePublishableKey
@@ -26,7 +27,6 @@
   $: client.id = id
   export let eventStream = client
   export let createPaymentIntent = client.createPaymentIntent
-  console.log(createPaymentIntent)
   export let getPaypalPlanId = client.getPaypalPlanId
 
   let jar, coins, base
@@ -59,7 +59,7 @@
 
   let wrapper
   function onDocumentClick(event) {
-    // if (tipping && wrapper && !wrapper.contains(event.target)) tipping = false
+    if (tipping && wrapper && document.body.contains(event.target) && !wrapper.contains(event.target)) tipping = false
   }
 </script>
 
@@ -71,7 +71,7 @@
   --color-saturation: {c ? c[1]*100 : 0}%;
   --color-lightness: {c ? c[2]*100 : 0}%;
 ">
-  <Tip {tipping} {label} {radius} {createPaymentIntent} {getPaypalPlanId} {paypalClientId} />
+  <Tip {tipping} {label} {currency} {radius} {createPaymentIntent} {getPaypalPlanId} {paypalClientId} />
 
   <div class="jar" class:tipping
     bind:clientWidth={w} bind:clientHeight={h}

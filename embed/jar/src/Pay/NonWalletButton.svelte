@@ -1,49 +1,63 @@
 <script>
-	import { Frequency } from '../lib/const'
+	import { Frequency, APIErrorCode } from '../lib/const'
 	import { unresolved } from '../lib/util'
 	import EmailField from './EmailField.svelte'
 	import PaymentElement from './PaymentElement.svelte'
 
 	export let amount
 	export let frequency
-	export let startPaying = false
-	export let paying = startPaying
+	export let currency
+	export let paying = false
+	export let expanded = false
 	export let label = 'Pay'
+	export let useExtraStepForEmail = false
 	export let createPaymentIntent
-
-	let paymentIntent
-	$: if (!paying) paymentIntent = null
 
 	let email, emailValid
 	$: needEmail = frequency !== Frequency.ONE_TIME
+	$: showEmailScreen = needEmail && (useExtraStepForEmail ? expanded && !clientSecret : !clientSecret)
+	$: expanded = !!clientSecret
 
-	function createIntent(event) {
+	export function back() {
+		clientSecret = null
+		expanded = false
+	}
+
+	let clientSecret, error
+	$: if (!clientSecret) error = null
+	async function createIntent(event) {
 		event.preventDefault()
+		if (needEmail && (!email || !emailValid)) return
 		
-		paymentIntent = createPaymentIntent({ amount, frequency, email })
+		paying = true
+		try {
+			const response = await createPaymentIntent({ amount, frequency, email, currency })
+			clientSecret = response.clientSecret
+		} catch (e) {
+			error = e
+		}
+		paying = false
 	}
 </script>
 
-{#await (paymentIntent || unresolved())}
-	{#if !paying && needEmail}
-	<button class="tipkit-btn" on:click={() => paying = true}>
+{#if clientSecret}
+	{#key clientSecret}
+	<PaymentElement {clientSecret} {label} {email} />
+	{/key}
+{:else if showEmailScreen}
+	<form on:submit={createIntent}>
+		<EmailField bind:value={email} bind:valid={emailValid} />
+		<button class="tipkit-btn" disabled={!emailValid} type="submit">
+			{#if paying}spinner{/if}Continue to payment
+		</button>
+	</form>
+{:else if needEmail}
+	<button class="tipkit-btn" on:click={() => expanded = true}>
 		Continue
 	</button>
-	{:else if !paying && !needEmail}
+{:else}
+	{#if error}{error.code}{/if}
 	<button class="tipkit-btn" on:click={createIntent}>
-		{#await paymentIntent}spinner{/await}Continue to payment
+		{#if paying}spinner{/if}Continue to payment
 	</button>
-	{:else}
-		<form on:submit={createIntent}>
-			<EmailField bind:value={email} bind:valid={emailValid} />
-			<button class="tipkit-btn" disabled={!emailValid} type="submit">
-				{#await paymentIntent}spinner{/await}Continue to payment
-			</button>
-		</form>
 	{/if}
-{:then result}
-	<PaymentElement {label} {email} clientSecret={result.clientSecret} />
-{:catch error}
-	Error
-{/await}
-

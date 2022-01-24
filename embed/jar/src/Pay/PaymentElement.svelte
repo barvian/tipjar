@@ -1,15 +1,16 @@
 <script>
 	import { onMount, getContext } from 'svelte'
 	import { stripeKey } from '../lib/const'
+	import EmailField from './EmailField.svelte'
 
 	export let clientSecret
 	export let label = 'Pay'
 	export let email
-	let collectEmail = !!email
+	let collectEmail = !email
 
 	const stripeReq = getContext(stripeKey)
 
-	let container, elements, element
+	let container, elements, element, ready
 
 	let elementComplete = false, emailValid
 	$: complete = elementComplete && emailValid
@@ -19,10 +20,16 @@
 		elements = stripe.elements({
 			clientSecret,
 			appearance: {
+				labels: 'floating',
 				theme: 'flat',
 				variables: {
 					borderRadius: '4px',
 					spacingUnit: '2px'
+				},
+				rules: {
+					'.Label--floating': {
+						fontSize: '0.75rem',
+					}
 				}
 			}
 		})
@@ -34,17 +41,18 @@
 			},
 			fields: {
 				billingDetails: {
-			      email
+			      email: 'never'
 			    }
 			}
 		})
 
 		element.mount(container)
 		element.on('change', onChange)
+		element.on('ready', () => ready = true)
 	}
 
 	function onChange(event) {
-		complete = event.complete
+		elementComplete = event.complete
 	}
 
 	async function onSubmit(event) {
@@ -56,7 +64,7 @@
 				return_url: window.location.url,
 				payment_method_data: {
 					billing_details: {
-						email: '....'
+						email
 					}
 				}
 			},
@@ -66,13 +74,15 @@
 
 	onMount(() => {
 		renderElement()
-		return () => element?.destroy()
+		return () => {
+			try { element?.destroy() } catch(error) {} // It can throw if the element failed to set up in the first place
+		}
 	})
 </script>
 
 <form on:submit={onSubmit}>
 	<div bind:this={container} />
-	{#if collectEmail}
+	{#if collectEmail && ready}
 		<EmailField bind:value={email} bind:valid={emailValid} />
 	{/if}
 	<button disabled={!complete} type="submit" class="tipkit-btn">
