@@ -4,11 +4,11 @@
 	import Pay from './Pay/Pay.svelte'
 	import { parseToHsla, hsla } from 'color2k'
 	import { Frequency } from './lib/const'
-	import { crossfade, fade } from 'svelte/transition'
+	import { crossfade, fade, fly } from 'svelte/transition'
 	const [send, receive] = crossfade({ duration: 350 })
 
 	export let autofocus = true
-	export let radius = ''
+	export let r = 0
 	export let label
 	export let currency
 	export let tipping
@@ -45,14 +45,17 @@
 		money.focus()
 		clickedInput = true
 	}
+
+	const buttonHeight = 40
+	$: pill = r >= buttonHeight / 2
 </script>
 
 <div class="tipjar-tip"
-	class:tipping class:leaving
+	class:tipping class:leaving class:pill
 	on:animationend={() => leaving = false}
 	aria-hidden={!tipping}
 	style="
-		--radius: min({radius}, 9px);
+		--radius: min({r}px, {pill ? '2.5em' : '9px'});
 	"
 >
 	<div class="tipjar-tip-height" style="height: {height}px"><div class="tipjar-tip-wrapper" bind:clientHeight={height}>
@@ -68,20 +71,25 @@
 			</select>
 			<label for="frequency">
 				{frequency.label}
-				<svg viewBox="0 0 9 6" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="m1 1 3.5 3.5L8 1" stroke="currentColor" stroke-width="1.5"/></svg>
+				<svg viewBox="0 0 12 7" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M10.193.97a.75.75 0 1 1 1.062 1.062L6.53 6.756a.75.75 0 0 1-1.06 0L.745 2.032A.75.75 0 1 1 1.807.97L6 5.163 10.193.97Z" fill="currentColor"/></svg>
 			</label>
 		</div>
 		<Money class="tipjar-tip-money" {receive} {send} {currency} disabled={paying} bind:this={money} bind:amount bind:floatingAmount on:click={handleInputClick} {readonly} />
 		{:else}
-		<div class="tipjar-tip-summary" role="button" on:click={() => pay?.back()}>
-			<Money {currency} {receive} {send} editable={false} amount={amount} /><!--
-			--><span class="tipjar-tip-comma" transition:fade>, </span>
-			<span class="tipjar-tip-frequency" in:receive={{key: 'frequency'}} out:send={{key: 'frequency'}}>
-				{frequency.label}
-			</span>
+		<div class="tipjar-tip-header">
+			<button transition:fly={{ x: -20 }} class="tipjar-tip-back" on:click={() => pay?.back()}>
+				<svg viewBox="0 0 8 12" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M6.893 10.056a.75.75 0 1 1-1.062 1.062L1.107 6.393a.75.75 0 0 1 0-1.06L5.83.608A.751.751 0 0 1 6.893 1.67L2.7 5.863l4.193 4.193Z" fill="currentColor"/></svg>
+			</button>
+			<div class="tipjar-tip-summary">
+				<Money {currency} {receive} {send} editable={false} amount={amount} /><!--
+				--><span class="tipjar-tip-comma" transition:fade>, </span>
+				<span class="tipjar-tip-frequency" in:receive={{key: 'frequency'}} out:send={{key: 'frequency'}}>
+					{frequency.label.toLowerCase()}
+				</span>
+			</div>
 		</div>
 		{/if}
-		<Pay {label} {currency} {amount} {frequency} {createPaymentIntent} {getPaypalPlanId} {paypalClientId} bind:this={pay} bind:paying bind:expanded={payExpanded} />
+		<Pay {buttonHeight} {pill} {label} {currency} {amount} {floatingAmount} {frequency} {createPaymentIntent} {getPaypalPlanId} {paypalClientId} bind:this={pay} bind:paying bind:expanded={payExpanded} />
 	</div></div>
 </div>
 	
@@ -125,8 +133,9 @@
 		border-radius: var(--radius);
 		box-shadow: 0 2px 20px rgba(0,0,0,0.03);
 		bottom: calc(100% - calc(var(--size-2) - var(--size-1)));
-		left: calc(var(--size-1) * -1);
-		font-family: var(--font-family);
+		right: calc(var(--size-1) * -1);
+		font-size: var(--font-size);
+		/*font-family: var(--font-family);*/
 		min-width: 250px;
 		position: absolute;
 		opacity: 0;
@@ -138,12 +147,12 @@
 		--black: #000;
 		--gray: #8E8E8E;
 		/* https://css-tricks.com/snippets/css/system-font-stack/ */
-		--font-family: system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Oxygen-Sans,Ubuntu,Cantarell,"Helvetica Neue",sans-serif;;
+		/*--font-family: system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Oxygen-Sans,Ubuntu,Cantarell,"Helvetica Neue",sans-serif;;*/
 		--font-size: min(16px, 1rem); /* iOS tries zooming into inputs less than 16px */
-		--size--1: calc(var(--font-size) * 0.75);
-		--size-0: var(--font-size);
-		--size-1: calc(var(--font-size) * 1.15);
-		--size-2: calc(var(--font-size) * 1.5);
+		--size--1: 0.75em;
+		--size-0: 1em;
+		--size-1: 1.15em;
+		--size-2: 1.35em;
 	}
 
 		.tipjar-tip.tipping {
@@ -167,12 +176,13 @@
 	.tipjar-tip :global(.tipkit-btn) {
 		display: block;
 		font-family: var(--font-family);
-		font-size: var(--font-size);
+		font-size: 1em;
 		width: 100%;
 	}
 
 	.tipjar-tip-frequency-select {
-		margin: 0 auto 0.15em;
+		left: 0.25em;
+		margin: 0 auto 0.35em;
 		position: relative;
 		width: min-content;
 	}
@@ -206,19 +216,64 @@
 			position: relative;
 			top: -0.1em;
 			vertical-align: middle;
-			width: 0.5em;
+			width: 0.75em;
 		}
 
-	.tipjar-tip :global(.tipjar-tip-money) {
+	/*.tipjar-tip :global(.tipjar-tip-money) {
 		margin-bottom: var(--size--1);
-	}
+	}*/
 
-	.tipjar-tip :global(.tipkit-money.editable .tipkit-money-text::after) {
+	/*.tipjar-tip :global(.tipkit-money.editable .tipkit-money-text::after) {
 		content: '';
 		flex-basis: 0.5em;
 		flex-shrink: 1;
 		flex-grow: 0;
+	}*/
+
+	.tipjar-tip-header {
+		align-items: center;
+		display: flex;
+		justify-content: flex-start;
 	}
+
+	.tipjar-tip-summary {
+		flex: 1;
+		padding-top: 0.1em;
+		text-align: center;
+	}
+
+	.tipjar-tip-back {
+		align-items: center;
+		background: none;
+		color: var(--black);
+		appearance: none;
+		display: inline-flex;
+		border-radius: 100%;
+		border: 1px solid rgba(0,0,0,0.1);
+		box-shadow: none;
+		height: 1.5em;
+		justify-content: center;
+		margin-right: 0.35em;
+		padding: 0;
+		width: 1.5em;
+	}
+
+		.tipjar-tip-header::after {
+			content: '';
+			flex-basis: 1.85em; /* button width + margin */
+			flex-shrink: 1;
+			flex-grow: 0;
+		}
+
+	.tipjar-tip-summary svg {
+		height: 0.75em;
+		position: relative;
+		vertical-align: middle;
+	}
+
+		.tipjar-tip.pill .tipjar-tip-summary {
+			padding-left: 4px;
+		}
 
 	.tipjar-tip-frequency {
 		display: inline-block; /* can't animate inline elements */

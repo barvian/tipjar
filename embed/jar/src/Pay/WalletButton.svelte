@@ -1,42 +1,49 @@
 <script>
 	import { onMount, getContext } from 'svelte'
-	import { stripeKey } from '../lib/const'
-	import { Frequency, APIErrorCode } from '../lib/const'
+	import { p, unresolved } from '../lib/util'
+	import { stripeKey, Frequency, APIErrorCode } from '../lib/const'
 
 	export let label = 'Donation'
 	export let currency
 	export let height = 40
+	export let pill
 	export let amount
 	export let frequency
-	export let enabled
+	export let enabled = unresolved()
 	export let createPaymentIntent
+	export let error
 
 	const stripeReq = getContext(stripeKey)
 
-	let paymentRequest, container, element
+	let paymentRequest, container, element, ready
 	$: paymentRequest?.update({
 		total: { label, amount }
 	})
 
-	let clientSecret, error
+	let clientSecret
 	$: if (!clientSecret) error = null
 	function createIntent(email) {
-		clientSecret = createPaymentIntent({ amount, email, frequency, currency })
+		return createPaymentIntent({ amount, email, frequency, currency })
 			.then(response => response.clientSecret)
-			.catch(e => error = e)
-		return clientSecret
+			.catch(e => {
+				error = e
+				throw e
+			})
 	}
 
 	function onClick(event) {
 		// validate()
-		if (frequency === Frequency.ONE_TIME) { // don't need e-mail
-			createIntent()
-		}
 	}
 
 	async function onPaymentMethod(event) {
+		try {
+			clientSecret = await createIntent(event.payerEmail)
+		} catch (error) {
+			event.complete('fail')
+			return
+		}
+
 		const stripe = await stripeReq
-		if (!clientSecret) await createIntent(event.payerEmail)
 		const confirmResult = await stripe.confirmCardPayment(
 			clientSecret,
 			{
@@ -50,11 +57,11 @@
 			// Report to the browser that the payment failed, prompting it to
 			// re-show the payment interface, or show an error message and close
 			// the payment interface.
-			ev.complete('fail')
+			event.complete('fail')
 	    } else {
 			// Report to the browser that the confirmation was successful, prompting
 			// it to close the browser payment method collection interface.
-			ev.complete('success')
+			event.complete('success')
 			// Check if the PaymentIntent requires any actions and if so let Stripe.js
 			// handle the flow. If using an API version older than "2019-02-11"
 			// instead check for: `paymentIntent.status === "requires_source_action"`.
@@ -93,10 +100,20 @@
 		})
 
 		element.on('click', onClick)
-		paymentRequest.on('paymentMethod', onPaymentMethod)
+		paymentRequest.on('paymentmethod', onPaymentMethod)
 
-		enabled = paymentRequest.canMakePayment().then(can => Boolean(can))
-		if (await enabled) element.mount(container)
+		const canMakePayment = paymentRequest.canMakePayment().then(can => Boolean(can))
+		if (await canMakePayment) {
+			enabled = new Promise((resolve, reject) => {
+				element.on('ready', () => {
+					ready = true
+					resolve(true)
+				})
+			})
+			element.mount(container)
+		} else {
+			enabled = p(false)
+		}
 	}
 
 	onMount(() => {
@@ -105,4 +122,10 @@
 	})
 </script>
 
-<div bind:this={container} />
+<div hidden={!ready} bind:this={container} class:pill class="tipjar-wallet-button" />
+
+<style>
+	.tipjar-wallet-button.pill {
+		clip-path: inset(0 0 0 0 round 999px);
+	}
+</style>

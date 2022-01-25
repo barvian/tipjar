@@ -41,6 +41,7 @@
   $: if (base) {
      // in case they passed in a variable:
     const computed = getComputedStyle(base).getPropertyValue('background-color')
+    console.log(computed, 'color')
     c = parseToHsla(computed)
   }
   $: d = h
@@ -71,7 +72,7 @@
   --color-saturation: {c ? c[1]*100 : 0}%;
   --color-lightness: {c ? c[2]*100 : 0}%;
 ">
-  <Tip {tipping} {label} {currency} {radius} {createPaymentIntent} {getPaypalPlanId} {paypalClientId} />
+  <Tip {tipping} {label} {currency} {r} {createPaymentIntent} {getPaypalPlanId} {paypalClientId} />
 
   <div class="jar" class:tipping
     bind:clientWidth={w} bind:clientHeight={h}

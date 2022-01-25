@@ -3,6 +3,7 @@
 	import { unresolved } from '../lib/util'
 	import EmailField from './EmailField.svelte'
 	import PaymentElement from './PaymentElement.svelte'
+	import Spinner from '../Spinner.svelte'
 
 	export let amount
 	export let frequency
@@ -10,6 +11,7 @@
 	export let paying = false
 	export let expanded = false
 	export let label = 'Pay'
+	export let error
 	export let useExtraStepForEmail = false
 	export let createPaymentIntent
 
@@ -23,8 +25,8 @@
 		expanded = false
 	}
 
-	let clientSecret, error
-	$: if (!clientSecret) error = null
+	let clientSecret
+	$: if (paying) error = null
 	async function createIntent(event) {
 		event.preventDefault()
 		if (needEmail && (!email || !emailValid)) return
@@ -48,7 +50,7 @@
 	<form on:submit={createIntent}>
 		<EmailField bind:value={email} bind:valid={emailValid} />
 		<button class="tipkit-btn" disabled={!emailValid} type="submit">
-			{#if paying}spinner{/if}Continue to payment
+			<Spinner hidden={!paying} /> Continue to payment
 		</button>
 	</form>
 {:else if needEmail}
@@ -56,8 +58,7 @@
 		Continue
 	</button>
 {:else}
-	{#if error}{error.code}{/if}
 	<button class="tipkit-btn" on:click={createIntent}>
-		{#if paying}spinner{/if}Continue to payment
+		<Spinner hidden={!paying} /> Continue to payment
 	</button>
-	{/if}
+{/if}
